@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError, getJob } from '../api/client'
 import { JobResultDisplay } from '../components/JobResult'
@@ -22,7 +22,7 @@ export function JobDetail() {
     }
   }
 
-  useEffect(() => {
+  const startPolling = useCallback(() => {
     if (!id) return
 
     async function fetchJob() {
@@ -43,11 +43,16 @@ export function JobDetail() {
       }
     }
 
+    setIsLoading(true)
+    setError(null)
     void fetchJob()
     intervalRef.current = setInterval(() => void fetchJob(), POLL_INTERVAL_MS)
-
-    return stopPolling
   }, [id])
+
+  useEffect(() => {
+    startPolling()
+    return stopPolling
+  }, [startPolling])
 
   if (isLoading) {
     return (
@@ -62,9 +67,17 @@ export function JobDetail() {
     return (
       <div className="bg-red-50 border border-red-200 rounded-md p-4">
         <p className="text-sm text-red-700 mb-3">{error}</p>
-        <Link to="/" className="text-sm text-red-600 underline hover:no-underline">
-          ← Back to new analysis
-        </Link>
+        <div className="flex gap-4">
+          <button
+            onClick={startPolling}
+            className="text-sm text-red-600 underline hover:no-underline"
+          >
+            Retry
+          </button>
+          <Link to="/" className="text-sm text-red-600 underline hover:no-underline">
+            ← New analysis
+          </Link>
+        </div>
       </div>
     )
   }
