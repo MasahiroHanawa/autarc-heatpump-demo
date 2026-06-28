@@ -71,6 +71,11 @@ func (h *JobsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if errs := validateCreateJobRequest(req); len(errs) > 0 {
+		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"errors": errs})
+		return
+	}
+
 	job, err := h.svc.CreateJob(r.Context(), jobs.Input{
 		BuildingType:               req.BuildingType,
 		LivingAreaM2:               req.LivingAreaM2,
