@@ -110,6 +110,17 @@ func (h *JobsHandler) Get(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toJobResponse(job))
 }
 
+type listJobsResponse struct {
+	Jobs []jobSummaryResponse `json:"jobs"`
+}
+
+type jobSummaryResponse struct {
+	ID           string      `json:"id"`
+	Status       jobs.Status `json:"status"`
+	BuildingType string      `json:"building_type"`
+	CreatedAt    time.Time   `json:"created_at"`
+}
+
 // List handles GET /api/jobs
 func (h *JobsHandler) List(w http.ResponseWriter, r *http.Request) {
 	all, err := h.svc.ListJobs(r.Context())
@@ -118,12 +129,17 @@ func (h *JobsHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := make([]jobResponse, len(all))
+	summaries := make([]jobSummaryResponse, len(all))
 	for i, j := range all {
-		resp[i] = toJobResponse(j)
+		summaries[i] = jobSummaryResponse{
+			ID:           j.ID,
+			Status:       j.Status,
+			BuildingType: string(j.Input.BuildingType),
+			CreatedAt:    j.CreatedAt,
+		}
 	}
 
-	writeJSON(w, http.StatusOK, resp)
+	writeJSON(w, http.StatusOK, listJobsResponse{Jobs: summaries})
 }
 
 // — mapping ———————————————————————————————————————————————————————————————————
